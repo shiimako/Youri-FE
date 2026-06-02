@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../services/api";
-import { FiCalendar, FiCheckCircle, FiGift } from "react-icons/fi";
+import { FiCalendar, FiCheckCircle, FiGift, FiArrowLeft } from "react-icons/fi";
 import ImageWithFallback from "../components/ImageWithFallback";
 
 const WeeklyHistory = () => {
   const [historyData, setHistoryData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [claimData, setClaimData] = useState(null);
+  const navigate = useNavigate();
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -64,13 +66,35 @@ const WeeklyHistory = () => {
 
   return (
     <div className="min-h-screen bg-[#fbf9f7] pb-32 pt-6 px-6 md:px-12 font-sans animate-fadeIn">
-      <div className="max-w-2xl mx-auto mb-8 text-center">
-        <h1 className="text-3xl font-black text-gray-800 mb-2">
-          Arsip Mingguan
-        </h1>
-        <p className="text-gray-500 font-medium text-sm">
-          Rekam jejak mahakaryamu dan bahan yang berhasil diselamatkan minggu
-          ini.
+      
+      {/* 🌸 HEADER CONTAINER (Relatif untuk mengunci posisi tombol) */}
+      <div className="max-w-2xl mx-auto mb-8 relative flex items-center justify-center min-h-[80px]">
+        
+        {/* Tombol Back (Menempel di Kiri) */}
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="absolute left-0 p-2.5 bg-white border border-gray-200 hover:bg-[#E3CBB8]/30 rounded-xl transition-colors text-gray-600 hover:text-[#C18A5E] shadow-sm z-10"
+        >
+          <FiArrowLeft size={22} />
+        </button>
+
+        {/* Teks Judul (Tetap Sempurna di Tengah) */}
+        <div className="text-center px-16">
+          <h1 className="text-3xl font-black text-gray-800 mb-2">
+            Arsip Mingguan
+          </h1>
+          <p className="text-gray-500 font-medium text-sm">
+            Rekam jejak mahakaryamu dan bahan yang berhasil diselamatkan minggu
+            ini.
+          </p>
+        </div>
+      </div>
+
+      {/* 🌸 YUKI'S FIX: Banner Peringatan Jangan Lupa Klaim */}
+      <div className="max-w-2xl mx-auto mb-8 bg-red-50 border border-red-100 p-4 rounded-2xl flex gap-3 items-start shadow-sm">
+        <span className="text-red-500 mt-0.5 text-lg">⚠️</span>
+        <p className="text-xs md:text-sm text-red-600 font-bold leading-relaxed">
+          <span className="font-black uppercase tracking-wide">Peringatan:</span> Jangan sampai terlewat! Bahan yang kamu selamatkan minggu ini harus segera diklaim sebelum berganti minggu agar EXP-nya tidak hangus.
         </p>
       </div>
 
@@ -131,6 +155,10 @@ const WeeklyHistory = () => {
                         {record.recipe_title}
                       </h4>
 
+                      <div className="mt-auto">
+                        <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-wider mb-2">
+                          Bahan terselamatkan pada resep ini:
+                        </p>
                       <div className="flex flex-wrap gap-2">
                         {record.saved_ingredients.length > 0 ? (
                           record.saved_ingredients.map((ing, idx) => (
@@ -146,6 +174,7 @@ const WeeklyHistory = () => {
                             Tidak ada bahan substitusi yang dipakai.
                           </span>
                         )}
+                      </div>
                       </div>
                     </div>
                   </div>

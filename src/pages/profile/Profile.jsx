@@ -370,15 +370,22 @@ const Profile = () => {
             </div>
 
             <form onSubmit={handleChangePassword} className="space-y-4">
-              <div className="space-y-1">
+              <div className="space-y-1 relative">
                 <label className="text-xs font-bold text-gray-500">Sandi Lama</label>
                 <input
-                  type="password" required
+                  type="password"
                   value={passwordForm.old_password}
                   onChange={(e) => setPasswordForm({ ...passwordForm, old_password: e.target.value }) }
                   className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-[#C18A5E] focus:ring-2 focus:ring-[#C18A5E]/20 outline-none transition-all text-sm"
                   placeholder="Masukkan sandi saat ini"
                 />
+                
+                <div className="flex items-start gap-1.5 mt-1.5 px-1">
+                  <span className="text-[10px] text-blue-500 mt-0.5">ℹ️</span>
+                  <p className="text-[10px] text-gray-400 leading-tight">
+                    Jika sebelumnya kamu mendaftar menggunakan <span className="font-semibold text-gray-500">Google</span> dan belum pernah mengganti sandi, <span className="text-[#C18A5E] font-bold">kosongkan saja</span> kolom ini.
+                  </p>
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-500">Sandi Baru</label>

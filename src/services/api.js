@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Sesuaikan URL dengan port backend Node.js (Default: 5000)
-const API_BASE_URL = 'http://localhost:5000/v1';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

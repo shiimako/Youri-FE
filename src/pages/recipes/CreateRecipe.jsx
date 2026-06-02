@@ -6,7 +6,7 @@ import axios from "axios";
 
 import { 
   FiArrowLeft, FiCamera, FiPlus, FiTrash2, 
-  FiTag, FiSearch, FiCheck, FiCheckCircle 
+  FiTag, FiSearch, FiCheck, FiCheckCircle, FiX, FiChevronDown
 } from "react-icons/fi";
 import ImageWithFallback from "../../components/ImageWithFallback";
 
@@ -40,6 +40,7 @@ const CreateRecipe = () => {
   const [showCatDropdown, setShowCatDropdown] = useState(false);
   const [activeIngDropdown, setActiveIngDropdown] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeMetricDropdown, setActiveMetricDropdown] = useState(null);
   
   // STATE MODAL SELEBRASI
   const [submitData, setSubmitData] = useState(null);
@@ -63,6 +64,34 @@ const CreateRecipe = () => {
     fetchInitialMetadata();
   }, []);
 
+  // 🌸 YUKI'S MAGIC 1: Debounce Antena Kategori
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      if (catSearch.trim() !== "") {
+        try {
+          const res = await api.get(`/categories?search=${catSearch}`);
+          setCategoryOptions(res.data.data);
+        } catch (error) { console.error(error); }
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [catSearch]);
+
+  // 🌸 YUKI'S MAGIC 2: Debounce Antena Bahan (Cari dari baris yang sedang aktif)
+  const activeIngText = activeIngDropdown !== null ? formData.ingredients[activeIngDropdown].name : "";
+  
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      if (activeIngText.trim() !== "") {
+        try {
+          const res = await api.get(`/ingredients?search=${activeIngText}`);
+          setIngredientOptions(res.data.data);
+        } catch (error) { console.error(error); }
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [activeIngText]);
+
   // ==========================================
   // HANDLER GAMBAR
   // ==========================================
@@ -81,7 +110,6 @@ const CreateRecipe = () => {
   // ==========================================
   // HANDLERS LAINNYA (Sama seperti sebelumnya)
   // ==========================================
-  const filteredCategories = categoryOptions.filter(cat => cat.name.toLowerCase().includes(catSearch.toLowerCase()));
   const exactCatMatch = categoryOptions.some(cat => cat.name.toLowerCase() === catSearch.toLowerCase());
 
   const handleSelectCategory = (catName) => {
@@ -123,6 +151,8 @@ const CreateRecipe = () => {
     setActiveIngDropdown(null);
   };
 
+  
+
   const handleAddStep = () => setFormData({ ...formData, steps: [...formData.steps, ""] });
   const handleRemoveStep = (index) => {
     setFormData({ ...formData, steps: formData.steps.filter((_, i) => i !== index) });
@@ -133,7 +163,32 @@ const CreateRecipe = () => {
     setFormData({ ...formData, steps: newSteps });
   };
 
-  const metricOptions = ["gram", "ml", "sdm", "sdt", "siung", "buah", "lembar", "batang", "secukupnya"];
+  const metricOptions = [
+  "gram",
+  "kilogram",
+  "mililiter",
+  "liter",
+  "sdm",
+  "sdt",
+  "buah",
+  "butir",
+  "siung",
+  "lembar",
+  "batang",
+  "ikat",
+  "ruas",
+  "bungkus",
+  "secukupnya",
+  "sejumput",
+  "potong",
+  "iris",
+  "cm",
+  "papan",
+  "gelas",
+  "cangkir",
+  "mangkok",
+  "ekor"
+];
 
   // ==========================================
   // HANDLER SUBMIT (THE ULTIMATE COMBO!)
@@ -292,7 +347,7 @@ const CreateRecipe = () => {
             </div>
             {showCatDropdown && catSearch && (
               <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-20 flex flex-col max-h-60 overflow-y-auto">
-                {filteredCategories.map(cat => (
+                {categoryOptions.map(cat => (
                   <div key={cat.category_id} onClick={() => handleSelectCategory(cat.name)} className="px-5 py-3 hover:bg-gray-50 cursor-pointer text-sm font-medium border-b border-gray-50 flex justify-between">
                     <span>{cat.name}</span>
                     <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded font-bold">Terpakai: {cat.count || 0}</span>
@@ -321,6 +376,7 @@ const CreateRecipe = () => {
         </div>
 
         {/* === SECTION BAHAN-BAHAN === */}
+        {/* === SECTION BAHAN-BAHAN === */}
         <div className="flex flex-col gap-3 p-5 md:p-6 bg-white border border-gray-100 rounded-3xl shadow-sm z-10">
           <div className="flex justify-between items-center mb-2">
             <label className="text-sm font-black text-gray-700 tracking-wide">Bahan-Bahan <span className="text-red-500">*</span></label>
@@ -330,13 +386,15 @@ const CreateRecipe = () => {
           </div>
 
           {formData.ingredients.map((ing, index) => {
-            const filteredIngs = ingredientOptions.filter(opt => opt.name.toLowerCase().includes(ing.name.toLowerCase()));
             const exactIngMatch = ingredientOptions.some(opt => opt.name.toLowerCase() === ing.name.toLowerCase());
-            const isDropdownOpen = activeIngDropdown === index;
+            const isIngDropdownOpen = activeIngDropdown === index;
+            const isMetricDropdownOpen = activeMetricDropdown === index;
 
             return (
               <div key={index} className="flex flex-col gap-2 relative p-4 bg-gray-50/50 rounded-2xl border border-gray-100 group transition-all hover:bg-gray-50">
                 <div className="flex flex-col md:flex-row gap-3">
+                  
+                  {/* 1. INPUT NAMA BAHAN */}
                   <div className="flex-[2] relative">
                     <input 
                       type="text" placeholder="Nama Bahan (Cari/Ketik Baru)" value={ing.name} 
@@ -352,9 +410,9 @@ const CreateRecipe = () => {
                       </div>
                     )}
 
-                    {isDropdownOpen && ing.name && (
-                      <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col max-h-60 overflow-y-auto">
-                        {filteredIngs.map(opt => (
+                    {isIngDropdownOpen && ing.name && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col max-h-60 overflow-y-auto custom-scrollbar">
+                        {ingredientOptions.map(opt => (
                            <div key={opt.ingredient_id} onClick={() => handleSelectIngredient(index, { ...opt, isCustom: false })} className="px-5 py-3 hover:bg-gray-50 cursor-pointer text-sm font-medium border-b border-gray-50">
                              {opt.name}
                            </div>
@@ -369,21 +427,46 @@ const CreateRecipe = () => {
                     )}
                   </div>
 
+                  {/* 2. INPUT QTY */}
                   <input 
-                    type="number" placeholder="Qty" value={ing.qty} 
+                    type="number" placeholder="Qty" value={ing.qty} step="any"
                     disabled={ing.metric === "secukupnya"}
                     onChange={(e) => handleChangeIngredient(index, "qty", e.target.value)}
                     className="flex-1 min-w-[80px] px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#C18A5E] transition-all disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   />
 
-                  <select 
-                    value={ing.metric} 
-                    onChange={(e) => handleChangeIngredient(index, "metric", e.target.value)}
-                    className="flex-1 min-w-[100px] px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:border-[#C18A5E] transition-all cursor-pointer"
-                  >
-                    {metricOptions.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                  {/* 3. CUSTOM METRIC DROPDOWN (PENGGANTI SELECT) */}
+                  <div className="flex-1 min-w-[120px] relative">
+                    <button 
+                      type="button"
+                      onClick={() => setActiveMetricDropdown(isMetricDropdownOpen ? null : index)}
+                      onBlur={() => setTimeout(() => setActiveMetricDropdown(null), 200)}
+                      className="w-full h-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:border-[#C18A5E] transition-all flex items-center justify-between cursor-pointer"
+                    >
+                      <span className="truncate">{ing.metric || "Pilih"}</span>
+                      <FiChevronDown className={`shrink-0 transition-transform duration-300 ${isMetricDropdownOpen ? 'rotate-180 text-[#C18A5E]' : 'text-gray-400'}`} />
+                    </button>
 
+                    {/* Menu List Metric */}
+                    {isMetricDropdownOpen && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50 flex flex-col max-h-48 overflow-y-auto custom-scrollbar">
+                        {metricOptions.map(m => (
+                          <div 
+                            key={m} 
+                            onClick={() => {
+                              handleChangeIngredient(index, "metric", m);
+                              setActiveMetricDropdown(null);
+                            }}
+                            className={`px-4 py-2.5 cursor-pointer text-sm font-medium border-b border-gray-50 transition-colors ${ing.metric === m ? 'bg-[#E3CBB8]/20 text-[#C18A5E] font-black' : 'hover:bg-gray-50 text-gray-700'}`}
+                          >
+                            {m}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. TOMBOL HAPUS (Hanya jika > 1) */}
                   {formData.ingredients.length > 1 && (
                     <button onClick={() => handleRemoveIngredient(index)} type="button" className="md:w-12 py-3.5 md:py-0 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl flex justify-center items-center transition-colors border border-red-100 shrink-0">
                       <FiTrash2 size={18} />
@@ -391,6 +474,7 @@ const CreateRecipe = () => {
                   )}
                 </div>
 
+                {/* 5. CHECKBOX CORE & WARNING MESSAGE */}
                 <label className="flex items-center gap-2.5 mt-1 ml-1 cursor-pointer w-fit group">
                   <div className={`w-5 h-5 rounded-[6px] border flex items-center justify-center transition-all duration-200 ${ing.is_core ? 'bg-[#C18A5E] border-[#C18A5E] shadow-sm' : 'bg-white border-gray-300 group-hover:border-[#C18A5E]'}`}>
                     <FiCheck strokeWidth={3} className={`transition-transform duration-200 ${ing.is_core ? 'scale-100 text-white' : 'scale-0 text-transparent'}`} size={14} />
@@ -398,6 +482,13 @@ const CreateRecipe = () => {
                   <input type="checkbox" checked={ing.is_core} onChange={(e) => handleChangeIngredient(index, "is_core", e.target.checked)} className="hidden" />
                   <span className={`text-xs font-bold transition-colors duration-200 ${ing.is_core ? 'text-[#C18A5E]' : 'text-gray-500 group-hover:text-gray-700'}`}>⭐ Tandai sebagai Bahan Utama</span>
                 </label>
+
+                {!ing.is_valid && ing.name && (
+                  <div className="text-[10px] text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 flex items-center gap-1.5 mt-1">
+                    <span className="text-amber-500 font-black">⚠️</span> 
+                    <span>Jangan khawatir! Bahan baru ini akan diajukan ke Admin untuk ditambahkan.</span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -504,9 +595,5 @@ const CreateRecipe = () => {
     </div>
   );
 };
-
-const FiX = ({ size }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-);
 
 export default CreateRecipe;

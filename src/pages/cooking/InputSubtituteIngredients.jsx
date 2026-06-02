@@ -28,7 +28,21 @@ const InputSubstituteIngredients = () => {
     fetchInitialMetadata();
   }, []);
 
-  const filteredIngs = ingredientOptions.filter(opt => opt.name.toLowerCase().includes(inputValue.toLowerCase()));
+  // 🌸 YUKI'S MAGIC 2: Debounced Server-Side Search!
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      if (inputValue.trim() !== "") {
+        try {
+          const res = await api.get(`/ingredients?search=${inputValue}`);
+          setIngredientOptions(res.data.data);
+        } catch (error) { 
+          console.error(error); 
+        }
+      }
+    }, 300); // Tunggu 300ms setelah Senpai ngetik baru tembak API
+    return () => clearTimeout(delayDebounce); // Bersihkan timer
+  }, [inputValue]);
+
   const exactIngMatch = ingredientOptions.some(opt => opt.name.toLowerCase() === inputValue.toLowerCase());
 
   const handleSelectIngredient = (ingName) => {
@@ -141,7 +155,7 @@ const InputSubstituteIngredients = () => {
             {/* Dropdown Autocomplete */}
             {showDropdown && inputValue && (
               <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50 flex flex-col max-h-60 overflow-y-auto">
-                {filteredIngs.map(opt => (
+                {ingredientOptions.map(opt => (
                   <div key={opt.ingredient_id} onClick={() => handleSelectIngredient(opt.name)} className="px-5 py-3 hover:bg-gray-50 cursor-pointer text-sm font-medium border-b border-gray-50">
                     {opt.name}
                   </div>

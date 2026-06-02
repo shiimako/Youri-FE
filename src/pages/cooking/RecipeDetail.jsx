@@ -14,6 +14,7 @@ import {
   FiX,
   FiCheck,
   FiArrowRight,
+  FiTrash2,
 } from "react-icons/fi";
 import ImageWithFallback from "../../components/ImageWithFallback";
 
@@ -43,6 +44,14 @@ const RecipeDetail = () => {
 
   const [proofImage, setProofImage] = useState(null);
   const wakeLockRef = useRef(null);
+
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportForm, setReportForm] = useState({ category: "spam", reason: "" });
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  const [isAdminTakedownModalOpen, setIsAdminTakedownModalOpen] = useState(false);
+  const [adminTakedownReason, setAdminTakedownReason] = useState("");
+  const [isSubmittingTakedown, setIsSubmittingTakedown] = useState(false);
 
   useEffect(() => {
     if (aiState) {
@@ -230,6 +239,51 @@ const RecipeDetail = () => {
     setTimeout(() => window.location.reload(), 300);
   };
 
+  const handleSubmitReport = async (e) => {
+    e.preventDefault();
+    if (!reportForm.reason.trim()) return toast.error("Alasannya diisi dulu ya!");
+    
+    setIsSubmittingReport(true);
+    const toastId = toast.loading("Mengirim laporan rahasia ke Youri...");
+    
+    try {
+      await api.post(`/cooking/${id}/report`, reportForm); 
+      toast.success("Laporan berhasil dikirim! Terima kasih ya.", { id: toastId });
+      setIsReportModalOpen(false);
+      setReportForm({ category: "spam", reason: "" });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Gagal mengirim laporan", { id: toastId });
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+  // 🌸 TRIGGER PEMBUKA MODAL ADMIN
+  const handleOpenAdminTakedown = () => setIsAdminTakedownModalOpen(true);
+
+  // 🌸 EKSEKUSI API TAKEDOWN (DARI DALAM MODAL)
+  const submitAdminTakedown = async (e) => {
+    e.preventDefault();
+    if (!adminTakedownReason.trim()) return toast.error("Alasannya wajib diisi, Admin!");
+    
+    setIsSubmittingTakedown(true);
+    const toastId = toast.loading("Mengeksekusi Takedown Paksa...");
+    
+    try {
+      // Sesuai dengan controller baru Senpai yang menggunakan POST dan butuh 'reason'
+      await api.post(`/admin/recipes/${id}/takedown`, { id: id, reason: adminTakedownReason }); 
+      
+      toast.success("Resep berhasil di-takedown!", { id: toastId });
+      setIsAdminTakedownModalOpen(false);
+      navigate(-1); // Langsung tendang Admin kembali ke halaman sebelumnya
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Gagal melakukan takedown", { id: toastId });
+      console.error("Admin Takedown Error:", error);
+    } finally {
+      setIsSubmittingTakedown(false);
+    }
+  };
+
   if (isLoading || !recipe) {
     return (
       <div className="min-h-screen bg-[#fbf9f7] flex flex-col justify-center items-center">
@@ -259,6 +313,29 @@ const RecipeDetail = () => {
           >
             <FiArrowLeft size={24} />
           </button>
+        )}
+
+        {/* 🌸 TOMBOL REPORT & ADMIN (Pojok Kanan Atas) */}
+        {!isActiveSession && (
+          <div className="absolute top-6 right-6 flex items-center gap-3 z-10">
+            
+            {userData?.role === 'admin' ? (
+              <button 
+                onClick={handleOpenAdminTakedown} 
+                className="px-4 py-2.5 bg-gradient-to-r from-red-600/90 to-red-500/90 backdrop-blur-md hover:from-red-700 hover:to-red-600 text-white text-xs font-black rounded-2xl transition-all shadow-md flex items-center gap-2 border border-red-400/30"
+              >
+                <FiTrash2 size={16} strokeWidth={3} /> Takedown
+              </button>
+            ) : 
+
+            <button 
+              onClick={() => setIsReportModalOpen(true)} 
+              className="px-4 py-2.5 bg-gray-900/60 backdrop-blur-md hover:bg-gray-800 text-white text-xs font-bold rounded-2xl transition-colors shadow-sm flex items-center gap-2"
+            >
+              ⚠️ Laporkan
+            </button> }
+            
+          </div>
         )}
 
         <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2.5 z-20">
@@ -568,6 +645,92 @@ const RecipeDetail = () => {
             <button onClick={handleCloseCongrats} className="w-full py-4 rounded-2xl font-black text-white bg-[#C18A5E] hover:bg-[#a6744d] shadow-[0_8px_20px_rgba(193,138,94,0.3)] transition-all active:scale-95 text-lg">
               Lanjutkan
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL REPORT RESEP
+          ========================================== */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl relative">
+            <h2 className="text-2xl font-black text-gray-800 mb-2">Laporkan Resep</h2>
+            <p className="text-xs text-gray-500 font-medium mb-6">Bantu Youri menjaga kualitas dapur kita. Apa yang salah dengan resep ini?</p>
+            
+            <form onSubmit={handleSubmitReport} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-gray-700">Kategori Pelanggaran</label>
+                <select 
+                  value={reportForm.category} 
+                  onChange={(e) => setReportForm({...reportForm, category: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-red-400"
+                >
+                  <option value="fake_recipe">Resep Palsu / Tidak Masuk Akal</option>
+                  <option value="spam">Spam / Promosi Iklan</option>
+                  <option value="inappropriate">Gambar/Teks Tidak Pantas</option>
+                  <option value="irrelevant">Tidak Sesuai Kategori/Judul</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-gray-700">Alasan Lengkap</label>
+                <textarea 
+                  rows="3" required
+                  placeholder="Ceritakan detailnya di sini..." 
+                  value={reportForm.reason}
+                  onChange={(e) => setReportForm({...reportForm, reason: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-red-400 resize-none"
+                ></textarea>
+              </div>
+
+              <div className="flex gap-3 mt-4">
+                <button type="button" onClick={() => setIsReportModalOpen(false)} className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl font-bold text-sm transition-colors">Batal</button>
+                <button type="submit" disabled={isSubmittingReport} className="flex-1 py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50">
+                  {isSubmittingReport ? "Mengirim..." : "Kirim Laporan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL ADMIN INSTANT TAKEDOWN
+          ========================================== */}
+      {isAdminTakedownModalOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl relative border-2 border-red-500/20 overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-red-500"></div>
+            
+            <h2 className="text-2xl font-black text-gray-800 mb-2 flex items-center gap-2">
+              <span className="text-red-500">⚠️</span> Admin Takedown
+            </h2>
+            <p className="text-xs text-gray-500 font-medium mb-6 leading-relaxed">
+              Tindakan ini akan <strong className="text-red-500">menghapus paksa</strong> resep dari peredaran dan mengirimkan notifikasi pelanggaran ke pemilik resep.
+            </p>
+            
+            <form onSubmit={submitAdminTakedown} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-gray-700">Alasan Takedown (Wajib)</label>
+                <textarea 
+                  rows="3" required
+                  placeholder="Berikan alasan spesifik untuk author..." 
+                  value={adminTakedownReason}
+                  onChange={(e) => setAdminTakedownReason(e.target.value)}
+                  className="w-full px-4 py-3 bg-red-50/30 border border-red-200 rounded-xl text-sm font-medium focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 resize-none"
+                ></textarea>
+              </div>
+
+              <div className="flex gap-3 mt-4">
+                <button type="button" onClick={() => setIsAdminTakedownModalOpen(false)} className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl font-bold text-sm transition-colors">
+                  Batal
+                </button>
+                <button type="submit" disabled={isSubmittingTakedown} className="flex-[1.5] py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-sm shadow-[0_8px_20px_rgba(220,38,38,0.3)] transition-all active:scale-95 disabled:opacity-50">
+                  {isSubmittingTakedown ? "Mengeksekusi..." : "Hapus Resep!"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

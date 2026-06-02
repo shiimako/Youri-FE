@@ -28,6 +28,7 @@ const MainLayout = () => {
   // State Kontrol Menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(true);
   const dropdownRef = useRef(null);
 
   const navigate = useNavigate();
@@ -130,7 +131,19 @@ const MainLayout = () => {
 
             <div className="relative" ref={dropdownRef}>
               <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="focus:outline-none hover:scale-105 transition-transform">
-                <ImageWithFallback src={userData.avatar_url} fallbackText={userData.username.slice(0, 2).toUpperCase()} className="w-12 h-12 rounded-full object-cover shadow-sm border-2 border-[#C18A5E] bg-white p-0.5" />
+                {userData.avatar_url ? (
+                  <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 shadow-sm">
+                    <ImageWithFallback
+                      src={userData.avatar_url}
+                      fallbackText={userData.username.slice(0, 2).toUpperCase()}
+                      className={`w-full h-full object-cover transition-all`}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 bg-[#E3CBB8] rounded-full flex items-center justify-center">
+                    <span className="text-lg font-bold text-white">{userData.username.slice(0, 2).toUpperCase()}</span>
+                  </div>
+                )}
               </button>
 
               <div className={`absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 transition-all origin-top-right ${isProfileMenuOpen ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"}`}>
@@ -171,33 +184,44 @@ const MainLayout = () => {
           </Link>
         </div>
 
-        <nav className="flex flex-col gap-2 flex-1 overflow-y-auto mt-2 pr-2">
-          <MenuLink to="/dashboard" icon={<FiHome />} label="Dashboard" current={location.pathname} />
-          <MenuLink 
-            to="/weekly-history" 
-            icon={<FiCalendar />} 
-            label="Histori Masakmu" 
-            current={location.pathname} 
-            badge={info.can_claim ? <div className="w-2.5 h-2.5 bg-red-500 rounded-full shadow-sm"></div> : null}
-          />
-          <MenuLink 
-            to="/my-recipes" 
-            icon={<FiBookOpen />} 
-            label="Resep Buatanmu" 
-            current={location.pathname} 
-            badge={userData.recipe?.is_taken_down ? <FiAlertTriangle className="text-red-500 drop-shadow-sm" size={16} /> : null}
-          />
+        {/* 🌸 NAVIGASI DESKTOP (Dengan Accordion) */}
+        <div className="flex-1 mt-4 -mb-2 overflow-y-auto pr-2 pb-4 custom-scrollbar">
+          <MenuAccordion 
+            title="Navigasi Utama" 
+            isOpen={isDesktopMenuOpen} 
+            setIsOpen={setIsDesktopMenuOpen}
+          >
+            <MenuLink to="/dashboard" icon={<FiHome />} label="Dashboard" current={location.pathname} />
+            <MenuLink 
+              to="/weekly-history" 
+              icon={<FiCalendar />} 
+              label="Histori Masakmu" 
+              current={location.pathname} 
+              badge={info.can_claim ? <div className="w-2.5 h-2.5 bg-red-500 rounded-full shadow-sm"></div> : null}
+            />
+            <MenuLink 
+              to="/my-recipes" 
+              icon={<FiBookOpen />} 
+              label="Resep Buatanmu" 
+              current={location.pathname} 
+              badge={userData.recipe?.is_taken_down ? <FiAlertTriangle className="text-red-500 drop-shadow-sm" size={16} /> : null}
+            />
+          </MenuAccordion>
+
+          {/* Admin Panel */}
           {userData.role === "admin" && (
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <Link to="/admin" className="flex items-center gap-4 p-4 rounded-2xl transition-all bg-gradient-to-r from-red-50 to-white hover:from-red-100 text-red-600 font-bold border border-red-100 shadow-sm">
-                <div className="p-2 bg-red-100 rounded-xl"><FiShield size={18} /></div>
-                <span className="text-sm">Admin Panel</span>
+              <Link to="/admin" className="flex items-center justify-between p-4 rounded-2xl transition-all bg-gradient-to-r from-red-50 to-white hover:from-red-100 text-red-600 font-bold border border-red-100 shadow-sm group">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-red-100 rounded-xl group-hover:scale-110 transition-transform"><FiShield size={18} /></div>
+                  <span className="text-sm">Admin Panel</span>
+                </div>
               </Link>
             </div>
           )}
-        </nav>
+        </div>
 
-        <div className="mt-auto pt-6 flex items-center shrink-0">
+        <div className="shrink-0 flex items-center justify-start mt-2">
           <span className="text-[10px] font-black text-gray-300 tracking-[0.2em]">© 2026 YOURITEAM</span>
         </div>
       </aside>
@@ -246,8 +270,18 @@ const MainLayout = () => {
 
         <div className={`absolute top-0 right-0 w-[85%] max-w-sm h-full bg-white shadow-2xl p-6 flex flex-col transition-transform duration-300 ease-out ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
           <div className="flex justify-between items-center mb-8 shrink-0">
-            <div className="flex items-center gap-3">
-              <ImageWithFallback src={userData.avatar_url} fallbackText={userData.username.slice(0, 2).toUpperCase()} className="w-12 h-12 rounded-full object-cover border-2 border-white ring-2 ring-[#C18A5E]/30 shadow-sm" />
+            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 shadow-sm">
+              {userData.avatar_url ? (
+                  <ImageWithFallback
+                    src={userData.avatar_url}
+                    fallbackText={userData.username.slice(0, 2).toUpperCase()}
+                    className={`w-full h-full object-cover transition-all`}
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-[#E3CBB8] rounded-full flex items-center justify-center">
+                    <span className="text-lg font-bold text-white">{userData.username.slice(0, 2).toUpperCase()}</span>
+                  </div>
+                )}
               <span className="font-black text-gray-800 text-lg">{userData.username}</span>
             </div>
             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
@@ -270,7 +304,7 @@ const MainLayout = () => {
           </div>
 
           <nav className="flex flex-col gap-2 flex-1 overflow-y-auto pr-2 pb-4">
-            <MenuLink to="/profile" icon={<FiUser />} label="Pengaturan Profil" current={location.pathname} onClick={() => setIsMobileMenuOpen(false)} />
+            <MenuLink exact to="/profile" icon={<FiUser />} label="Pengaturan Profil" current={location.pathname} onClick={() => setIsMobileMenuOpen(false)} />
             <MenuLink to="/profile/sprites" icon={<FiStar />} label="Pengaturan Maskot" current={location.pathname} onClick={() => setIsMobileMenuOpen(false)} />
             <MenuLink to="/dashboard" icon={<FiHome />} label="Dashboard" current={location.pathname} onClick={() => setIsMobileMenuOpen(false)} />
             <MenuLink 
@@ -314,8 +348,11 @@ const MainLayout = () => {
 // KOMPONEN PEMBANTU
 // ==========================================
 
-const MenuLink = ({ to, icon, label, current, onClick, badge }) => {
-  const isActive = current === to || (to !== "/dashboard" && current.startsWith(to));
+const MenuLink = ({ to, icon, label, current, onClick, badge, exact }) => {
+ const isActive = exact 
+    ? current === to 
+    : current === to || (to !== "/dashboard" && current.startsWith(to));
+
   return (
     <Link
       to={to}
@@ -332,4 +369,27 @@ const MenuLink = ({ to, icon, label, current, onClick, badge }) => {
   );
 };
 
+  const MenuAccordion = ({ title, isOpen, setIsOpen, children }) => {
+  return (
+    <div className="flex flex-col border border-gray-200 bg-white rounded-3xl overflow-hidden shadow-sm transition-all">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 transition-colors"
+      >
+        <span className="font-black text-gray-700 text-sm tracking-wide uppercase">{title}</span>
+        <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-500 shadow-sm transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+      </button>
+      
+      <div 
+        className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+      >
+        <div className="p-3 flex flex-col gap-1 bg-white">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
 export default MainLayout;
