@@ -30,7 +30,7 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (
       !formData.username.trim() ||
@@ -47,16 +47,45 @@ const Register = () => {
     }
 
     setIsLoading(true);
-    toast
-      .promise(new Promise((resolve) => setTimeout(resolve, 1500)), {
-        loading: "Mendaftarkan koki baru ke Youri...",
-        success: "Akun berhasil dibuat! Silakan Login.",
-        error: "Pendaftaran gagal.",
-      })
-      .then(() => {
-        setIsLoading(false);
-        navigate("/login");
-      });
+
+    const payload = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      confirm_password: formData.confirmPassword,
+    };
+
+    try {
+      const response = await toast.promise(
+        api.post("/user/register", payload),
+        {
+          loading: "Sedang memetakan pangkalan data...",
+          success: "Pendaftaran Berhasil!! 🍳",
+          error: "Pendaftaran Gagal!",
+        },
+      );
+
+      if (response.status === 201 || response.data) {
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
+      }
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const { message, errors } = error.response.data;
+        if (errors) {
+          const firstErrorKey = Object.keys(errors)[0];
+          const firstErrorMessage = errors[firstErrorKey][0];
+          toast.error(`${firstErrorMessage}`);
+        } else {
+          toast.error(message || "Terjadi kesalahan saat pendaftaran.");
+        }
+      } else {
+        toast.error("Gagal terhubung ke server Youri.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNotAvailable = () => {
