@@ -45,20 +45,36 @@ const InputSubstituteIngredients = () => {
 
   const exactIngMatch = ingredientOptions.some(opt => opt.name.toLowerCase() === inputValue.toLowerCase());
 
-  const handleSelectIngredient = (ingName) => {
-    if (userIngredients.some(ing => ing.name.toLowerCase() === ingName.toLowerCase())) {
-      toast.error("Bahan ini sudah ada di keranjangmu!");
-    } else {
-      setUserIngredients([...userIngredients, { name: ingName, is_valid: false }]);
-    }
-    setInputValue("");
-    setShowDropdown(false);
-  };
+  const handleSelectIngredient = (ingredientItem, isCustom = false) => {
+  if (userIngredients.some(ing => ing.name.toLowerCase() === ingredientItem.name.toLowerCase())) {
+    toast.error("Bahan ini sudah ada di keranjangmu!");
+  } else {
+    // Kita buat is_valid menjadi dinamis seperti fungsi pertama!
+    setUserIngredients([...userIngredients, { 
+       ...ingredientItem, // Ambil semua data dari API (termasuk ID jika ada)
+       name: ingredientItem.name, 
+       is_valid: !isCustom 
+    }]);
+  }
+  setInputValue("");
+  setShowDropdown(false);
+};
 
   const handleAddIngredient = (e) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
-    handleSelectIngredient(inputValue.trim());
+    const typedValue = inputValue.trim();
+    if (!typedValue) return;
+
+    // 1. Cek apakah ketikan Senpai cocok dengan salah satu data dari API
+    const matchedOption = ingredientOptions.find(
+      opt => opt.name.toLowerCase() === typedValue.toLowerCase()
+    );
+
+    if (matchedOption) {
+      handleSelectIngredient(matchedOption, false);
+    } else {
+      handleSelectIngredient({ name: typedValue }, true);
+    }
   };
 
   const handleRemoveIngredient = (indexToRemove) => {
