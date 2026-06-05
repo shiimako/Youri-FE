@@ -178,7 +178,11 @@ const MatchRecipe = () => {
         ingredients: ownedIngredients.map(i => ({ id: i.ingredient_id || i.id, name: i.name })),
         match_percentage: matchPercentage
       });
+      if (res.data.data.with_ingredients) {
       navigate(`/cooking/recipe/${recipeId}`, { state: { aiData: res.data.data } });
+      }else{
+        navigate(`/cooking/recipe/${recipeId}`);
+      }
       toast.success("Resep siap!", { id: toastId });
     } catch (error) {
       toast.error("Gagal menyiapkan resep.", { id: toastId });
