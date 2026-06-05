@@ -46,13 +46,16 @@ const InputSubstituteIngredients = () => {
   const exactIngMatch = ingredientOptions.some(opt => opt.name.toLowerCase() === inputValue.toLowerCase());
 
   const handleSelectIngredient = (ingredientItem, isCustom = false) => {
-  if (userIngredients.some(ing => ing.name.toLowerCase() === ingredientItem.name.toLowerCase())) {
+  const itemObj = typeof ingredientItem === 'string' 
+    ? { name: ingredientItem } 
+    : ingredientItem;
+
+  if (userIngredients.some(ing => ing.name.toLowerCase() === itemObj.name.toLowerCase())) {
     toast.error("Bahan ini sudah ada di keranjangmu!");
   } else {
-    // Kita buat is_valid menjadi dinamis seperti fungsi pertama!
-    setUserIngredients([...userIngredients, { 
-       ...ingredientItem, // Ambil semua data dari API (termasuk ID jika ada)
-       name: ingredientItem.name, 
+    setUserIngredients(prev => [...prev, { 
+       ...itemObj, 
+       name: itemObj.name, 
        is_valid: !isCustom 
     }]);
   }
@@ -172,12 +175,12 @@ const InputSubstituteIngredients = () => {
             {showDropdown && inputValue && (
               <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50 flex flex-col max-h-60 overflow-y-auto">
                 {ingredientOptions.map(opt => (
-                  <div key={opt.ingredient_id} onClick={() => handleSelectIngredient(opt.name)} className="px-5 py-3 hover:bg-gray-50 cursor-pointer text-sm font-medium border-b border-gray-50">
+                  <div key={opt.ingredient_id} onClick={() => handleSelectIngredient(opt, false)} className="px-5 py-3 hover:bg-gray-50 cursor-pointer text-sm font-medium border-b border-gray-50">
                     {opt.name}
                   </div>
                 ))}
                 {!exactIngMatch && (
-                  <div onClick={() => handleSelectIngredient(inputValue)} className="px-5 py-3 bg-[#E3CBB8]/10 hover:bg-[#E3CBB8]/30 cursor-pointer text-sm font-black text-[#C18A5E] flex items-center justify-between mt-auto">
+                  <div onClick={() => handleSelectIngredient(inputValue, true)} className="px-5 py-3 bg-[#E3CBB8]/10 hover:bg-[#E3CBB8]/30 cursor-pointer text-sm font-black text-[#C18A5E] flex items-center justify-between mt-auto">
                     <span>Gunakan bahan kustom: "{inputValue}"</span>
                     <span className="bg-[#C18A5E] text-white text-[10px] px-2 py-1 rounded-md">Pilih</span>
                   </div>
