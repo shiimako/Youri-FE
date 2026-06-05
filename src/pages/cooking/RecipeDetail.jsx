@@ -616,10 +616,14 @@ const RecipeDetail = () => {
             aiState ? (
               <button
                 onClick={handleStartCooking}
-                disabled={isPollingAI || aiState.character?.status === "fail"} // Disable kalau masih loading ATAU kalau AI nyerah (skenario 1)
+                disabled={isPollingAI} // Disable kalau masih loading ATAU kalau AI nyerah (skenario 1)
                 className="w-full md:w-96 bg-gradient-to-r from-indigo-500 to-indigo-400 hover:from-indigo-400 hover:to-indigo-300 text-white py-4 rounded-2xl font-black text-lg shadow-[0_10px_20px_rgba(99,102,241,0.3)] hover:shadow-lg transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
               >
-                {isPollingAI ? "Menunggu Youri..." : "Ayo Mulai Memasak!"}{" "}
+                {isPollingAI
+                  ? "Menunggu Youri..."
+                  : aiState.character?.status === "fail"
+                    ? "Tetap mulai Masak!"
+                    : "Ayo Mulai Memasak!"}
                 <FiChevronRight size={22} />
               </button>
             ) : (
