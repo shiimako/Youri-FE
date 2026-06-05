@@ -447,25 +447,6 @@ const RecipeDetail = () => {
 
         {aiState && (
           <div className="flex flex-col gap-3 mb-8 animate-fadeIn">
-            {/* Banner Persentase */}
-            {aiState.recipe?.match_percentage && (
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-3xl shadow-[0_8px_20px_rgba(16,185,129,0.2)] flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100">
-                    Analisis Kecocokan
-                  </span>
-                  <span className="font-black text-sm md:text-base tracking-tight">
-                    Bahan di dapurmu sangat mendukung!
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-3xl md:text-4xl font-black tracking-tight">
-                    {aiState.recipe.match_percentage}%
-                  </span>
-                </div>
-              </div>
-            )}
-
             {/* Bubble Obrolan Youri */}
             {aiState.character && (
               <div className="bg-indigo-50 border border-indigo-100 p-5 md:p-6 rounded-3xl shadow-sm flex gap-4 md:gap-6 items-start transition-all duration-500">
