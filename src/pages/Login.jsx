@@ -4,11 +4,13 @@ import toast from "react-hot-toast";
 import YouriMascot from "../components/YouriMascot";
 import api from "../services/api";
 import { useGoogleLogin } from "@react-oauth/google";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); 
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -23,7 +25,7 @@ const Login = () => {
         api.post("/user/login", { email, password }),
         {
           loading: "Sedang memetakan pangkalan data...",
-          success: "Login Berhasil!! 🍳",
+          success: "Login Berhasil!! 👨‍🍳",
           error: "Login Gagal!",
         },
       );
@@ -48,22 +50,19 @@ const Login = () => {
     }
   };
 
-  // 2. Buat fungsi sihir Google SSO ini
   const handleGoogleSSO = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setIsLoading(true);
       try {
-        // Mengirim token dari Google ke Backend Senpai
         const response = await toast.promise(
           api.post('/user/google-auth', { google_token: tokenResponse.access_token }),
           {
             loading: 'Memverifikasi jalur VIP Google...',
-            success: 'Berhasil masuk dengan Google! 🚀',
+            success: 'Berhasil masuk dengan Google! ✨',
             error: 'Gagal terhubung dengan Google.',
           }
         );
         
-        // Simpan tiket Youri & meluncur ke Dashboard
         const { access_token } = response.data.data;
         localStorage.setItem('youri_token', access_token);
         navigate('/dashboard');
@@ -78,10 +77,6 @@ const Login = () => {
       toast.error('Login Google dibatalkan.');
     }
   });
-
-  const handleNotAvailable = () => {
-    toast("Fitur ini masih dalam tahap pengembangan.", { icon: "🚧" });
-  };
 
   return (
     <div className="w-full min-h-screen flex justify-center bg-white md:bg-[#1e1e1e]">
@@ -112,7 +107,7 @@ const Login = () => {
           <div className="w-full max-w-md mx-auto">
             <div className="hidden md:block mb-10">
               <h3 className="text-3xl font-bold text-gray-800 tracking-wide">
-                Selamat Datang di Youri! 👋
+                Selamat Datang di Youri! ✨
               </h3>
               <p className="text-base text-gray-500 mt-2">
                 Masuk ke akunmu untuk mulai meracik hidangan lezat hari ini.
@@ -134,18 +129,30 @@ const Login = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              {/* 🌸 Modifikasi Input Password di sini */}
+              <div className="flex flex-col gap-1.5 relative">
                 <label className="text-sm font-semibold text-gray-700 ml-1">
                   Password
                 </label>
-                <input
-                  type="password"
-                  placeholder="Masukkan password..."
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm border-2 border-transparent focus:border-[#C18A5E] focus:bg-white outline-none transition-all placeholder:text-gray-400"
-                />
+                <div className="relative w-full">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Masukkan password..."
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    /* Tambahkan pr-12 agar teks tidak tertutup ikon mata */
+                    className="w-full px-4 py-3 pr-12 bg-gray-100 rounded-xl text-sm border-2 border-transparent focus:border-[#C18A5E] focus:bg-white outline-none transition-all placeholder:text-gray-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C18A5E] focus:outline-none transition-colors"
+                  >
+                    {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -173,14 +180,12 @@ const Login = () => {
               <div className="flex-1 h-px bg-gray-200"></div>
             </div>
 
-
-            {/* 3. TOMBOL GOOGLE SSO (Full Width) */}
+            {/* 3. TOMBOL GOOGLE SSO */}
             <button
               onClick={handleGoogleSSO}
               type="button"
               className="w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all text-sm flex items-center justify-center gap-3 shadow-sm active:scale-95"
             >
-              {/* SVG Google Logo (Asli, Multicolor) */}
               <svg width="20" height="20" viewBox="0 0 48 48">
                 <defs>
                   <path
@@ -192,26 +197,14 @@ const Login = () => {
                   <use xlinkHref="#a" overflow="visible" />
                 </clipPath>
                 <path clipPath="url(#b)" fill="#FBBC05" d="M0 37V11l17 13z" />
-                <path
-                  clipPath="url(#b)"
-                  fill="#EA4335"
-                  d="M0 11l17 13 7-6.1L48 14V0H0z"
-                />
-                <path
-                  clipPath="url(#b)"
-                  fill="#34A853"
-                  d="M0 37l30-23 7.9 1L48 0v48H0z"
-                />
-                <path
-                  clipPath="url(#b)"
-                  fill="#4285F4"
-                  d="M48 48L17 24l-4-3 35-10z"
-                />
+                <path clipPath="url(#b)" fill="#EA4335" d="M0 11l17 13 7-6.1L48 14V0H0z" />
+                <path clipPath="url(#b)" fill="#34A853" d="M0 37l30-23 7.9 1L48 0v48H0z" />
+                <path clipPath="url(#b)" fill="#4285F4" d="M48 48L17 24l-4-3 35-10z" />
               </svg>
               Masuk dengan Google
             </button>
 
-            {/* 4. LINK REGISTER (Teks Saja) */}
+            {/* 4. LINK REGISTER */}
             <p className="text-center text-sm font-medium text-gray-500 mt-8">
               Belum punya akun?{" "}
               <Link
